@@ -6,6 +6,7 @@ module.exports = function ( grunt ) {
    */
   grunt.loadNpmTasks('grunt-recess');
   grunt.loadNpmTasks('grunt-contrib-clean');
+  grunt.loadNpmTasks('grunt-contrib-coffee');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
@@ -24,7 +25,10 @@ module.exports = function ( grunt ) {
      * The directory to which we throw our compiled project files.
      */
     distdir: 'dist',
-
+    /**
+     * The directory to which we throw our compiled coffescript files.
+     */
+    coffeeDist: 'dist/tmp/coffee',
     /**
      * We read in our `package.json` file so we can access the package name and
      * version. It's already there, so we don't repeat ourselves here.
@@ -55,13 +59,15 @@ module.exports = function ( grunt ) {
      * `less` is our main stylesheet.
      */
     src: {
-      js: [ 'src/**/*.js', '!src/**/*.spec.js' ], 
+      js: [ 'src/**/*.js', '!src/**/*.spec.js' ],
+      coffee: [ 'src/**/*.coffee', '!src/**/*.spec.coffee' ],
       atpl: [ 'src/app/**/*.tpl.html' ],
       ctpl: [ 'src/components/**/*.tpl.html' ],
       tpljs: [ '<%= distdir %>/tmp/**/*.js' ],
       html: [ 'src/index.html' ],
       less: 'src/less/main.less',
-      unit: [ 'src/**/*.spec.js' ]
+      unit: [ 'src/**/*.spec.js' ],
+      coffeeUnit: [ 'src/**/*.spec.coffee' ]
     },
 
     /**
@@ -106,13 +112,28 @@ module.exports = function ( grunt ) {
     },
 
     /**
+     * `grunt coffee` compiles our source code and unit tests written in coffe script
+     */	
+    coffee: {
+      compile: {
+        files: 
+          {
+            "<%= coffeeDist %>/coffee-app.js": ["<%= src.coffee %>"],
+            "<%= coffeeDist %>/coffee-app.spec.js": ["<%= src.coffeeUnit %>"]
+          }, 
+		options: { join: true }
+      }
+    },
+	
+    /**
      * `grunt concat` concatenates multiple source files into a single file.
      */
     concat: {
       /**
        * The `dist` target is the concatenation of our application source code
        * into a single file. All files matching what's in the `src.js`
-       * configuration property above will be included in the final build.
+       * configuration property above and compiled coffescript files
+       * will be included in the final build.
        *
        * In addition, the source is surrounded in the blocks specified in the
        * `module.prefix` and `module.suffix` files, which are just run blocks
@@ -127,7 +148,7 @@ module.exports = function ( grunt ) {
         options: {
           banner: '<%= meta.banner %>'
         },
-        src: [ 'module.prefix', '<%= src.js %>', '<%= src.tpljs %>', '<%= vendor.js %>', 'module.suffix' ],
+        src: [ 'module.prefix', '<%= src.js %>', "<%= coffeeDist %>/coffee-app.js", '<%= src.tpljs %>', '<%= vendor.js %>', 'module.suffix' ],
         dest: '<%= distdir %>/assets/<%= pkg.name %>.js'
       },
 
@@ -308,9 +329,10 @@ module.exports = function ( grunt ) {
        */
       src: {
         files: [ 
-          '<%= src.js %>'
+          '<%= src.js %>',
+          '<%= src.coffee %>'
         ],
-        tasks: [ 'jshint:src', 'karma:unit:run', 'concat:dist', 'ngmin:dist', 'uglify:dist' ]
+        tasks: [ 'coffee', 'jshint:src', 'karma:unit:run', 'concat:dist', 'ngmin:dist', 'uglify:dist' ]
       },
 
       /**
@@ -364,6 +386,20 @@ module.exports = function ( grunt ) {
         options: {
           livereload: false
         }
+      },
+
+      /**
+       * When a unit test file changes that is written in coffee script,
+       * we have to compile it and run unit tests
+       */
+      coffeeUnittest: {
+        files: [
+          '<%= src.coffeeUnit %>'
+        ],
+        tasks: [ 'coffee:compile', 'karma:unit:run' ],
+        options: {
+          livereload: false
+        }
       }
     }
   });
@@ -382,13 +418,13 @@ module.exports = function ( grunt ) {
    * The default task is to build.
    */
   grunt.registerTask( 'default', [ 'build' ] );
-  grunt.registerTask( 'build', ['clean', 'html2js', 'jshint', 'karma:continuous', 'concat', 'ngmin:dist', 'uglify', 'recess', 'index', 'copy'] );
+  grunt.registerTask( 'build', ['clean', 'coffee', 'html2js', 'jshint', 'karma:continuous', 'concat', 'ngmin:dist', 'uglify', 'recess', 'index', 'copy'] );
 
   /**
    * A task to build the project, without some of the slower processes. This is
    * used during development and testing and is part of the `watch`.
    */
-  grunt.registerTask( 'quick-build', ['clean', 'html2js', 'jshint', 'test', 'concat', 'recess', 'index', 'copy'] );
+  grunt.registerTask( 'quick-build', ['clean', 'coffee', 'html2js', 'jshint', 'test', 'concat', 'recess', 'index', 'copy'] );
 
   /** 
    * The index.html template includes the stylesheet and javascript sources
