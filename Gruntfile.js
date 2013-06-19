@@ -63,7 +63,7 @@ module.exports = function ( grunt ) {
       coffee: [ 'src/**/*.coffee', '!src/**/*.spec.coffee' ],
       atpl: [ 'src/app/**/*.tpl.html' ],
       ctpl: [ 'src/components/**/*.tpl.html' ],
-      tpljs: [ '<%= distdir %>/tmp/**/*.js' ],
+      tpljs: [ '<%= distdir %>/tmp/**/templates-app.js', '<%= distdir %>/tmp/**/templates-components.js'],
       html: [ 'src/index.html' ],
       less: 'src/less/main.less',
       unit: [ 'src/**/*.spec.js' ],
@@ -418,13 +418,13 @@ module.exports = function ( grunt ) {
    * The default task is to build.
    */
   grunt.registerTask( 'default', [ 'build' ] );
-  grunt.registerTask( 'build', ['clean', 'coffee', 'html2js', 'jshint', 'karma:continuous', 'concat', 'ngmin:dist', 'uglify', 'recess', 'index', 'copy'] );
+  grunt.registerTask( 'build', ['clean', 'html2js', 'coffee', 'jshint', 'karma:continuous', 'concat', 'ngmin:dist', 'uglify', 'recess', 'index', 'copy'] );
 
   /**
    * A task to build the project, without some of the slower processes. This is
    * used during development and testing and is part of the `watch`.
    */
-  grunt.registerTask( 'quick-build', ['clean', 'coffee', 'html2js', 'jshint', 'test', 'concat', 'recess', 'index', 'copy'] );
+  grunt.registerTask( 'quick-build', ['clean', 'html2js', 'coffee', 'jshint', 'test', 'concat', 'recess', 'index', 'copy'] );
 
   /** 
    * The index.html template includes the stylesheet and javascript sources
